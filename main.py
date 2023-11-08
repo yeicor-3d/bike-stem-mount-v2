@@ -40,6 +40,6 @@ with BuildPart() as obj:
 # ================== SHOWING/EXPORTING ==================
 
 if 'show_object' in locals():
-    show_object(obj, '<main-object-name>')
+    show_object(obj, 'main-object-name')
 else:
-    obj.part.export_stl('<main-object-name>.stl')
+    obj.part.export_stl('main-object-name.stl')
