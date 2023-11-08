@@ -34,7 +34,6 @@ with BuildPart() as obj:
     extrude(amount=screw_length - nut_height)
 
     # The fillet, only on the bottom face
-
     fillet(obj.edges().group_by(Axis.Z)[0].sort_by(SortBy.LENGTH)[-1], button_fillet)
 
 
