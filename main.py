@@ -1,10 +1,10 @@
 from build123d import *
 
-# try: # Optional, for visualizing the model in VSCode instead of CQ-editor or exporting to STL
-#   from ocp_vscode import show_object, show_all, reset_show, set_port
-#   set_port(3939)
-# except ImportError:
-#   pass
+try: # Optional, for visualizing the model in VSCode instead of CQ-editor or exporting to STL
+  from ocp_vscode import show_object, show_all, reset_show, set_port
+  set_port(3939)
+except ImportError:
+  pass
 
 
 # ================== PARAMETERS ==================
@@ -32,6 +32,12 @@ button_fillet = (wall + washer_depth + nut_depth + wall) / 2 - eps # max
 obj = Circle(button_rad)
 obj = extrude(obj, wall + washer_depth + nut_depth + wall)
 
+# Remove the shank of the screw
+shank = Circle(screw_shank_rad)
+shank = extrude(shank, wall)
+obj -= shank
+del shank
+
 # Remove the internal washer hole
 washer = Location((0, 0, wall)) * Circle(washer_outer_rad)
 washer = extrude(washer, washer_depth)
@@ -39,7 +45,7 @@ obj -= washer
 del washer
 
 # Remove the internal nut hole
-nut = Location((0, 0, wall + washer_depth)) * RegularPolygon(nut_rad, 6)
+nut = Location((0, 0, wall + washer_depth)) * RegularPolygon(nut_rad, 6, major_radius=False)
 nut = extrude(nut, nut_depth)
 obj -= nut
 del nut
@@ -58,6 +64,8 @@ del extra_segments
 del obj_extra_segments
 to_fillet = obj.edges().group_by(Axis.Z)
 to_fillet = to_fillet[0] + to_fillet[-1]
+to_fillet = to_fillet.group_by(SortBy.LENGTH)
+to_fillet = to_fillet[0] + to_fillet[1] + to_fillet[2]
 obj = fillet(to_fillet, button_fillet)
 del to_fillet
 
