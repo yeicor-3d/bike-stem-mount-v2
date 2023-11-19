@@ -1,10 +1,10 @@
 from build123d import *
 
 try: # Optional, for visualizing the model in VSCode instead of CQ-editor or exporting to STL
-  from ocp_vscode import show_object, show_all, reset_show, set_port
-  set_port(3939)
+    import ocp_vscode
+    ocp_vscode.set_port(3939)
 except ImportError:
-  pass
+    pass
 
 
 # ================== PARAMETERS ==================
@@ -73,10 +73,20 @@ del to_fillet
 
 # ================== SHOWING/EXPORTING ==================
 
-if 'reset_show' in locals() and 'show_all' in locals():
-    reset_show()
-    show_all()
-elif 'show_object' in locals():
-    show_object(obj, 'main-object-name')
-else:
+export = True
+try:
+    if 'ocp_vscode' in locals():
+        import socket
+        tmp_socket = socket.socket()
+        tmp_socket.connect(('localhost', ocp_vscode.get_port()))
+        tmp_socket.close()
+        ocp_vscode.reset_show()
+        ocp_vscode.show_all()
+        export = False # If the connection fails, export to STL instead
+    elif 'show_object' in locals():
+        show_object(obj, 'main-object-name')
+except Exception as ex:
+    print("Cannot show model, exporting to STL instead (%s)" % ex)
+    
+if export:
     obj.export_stl('main-object-name.stl')
