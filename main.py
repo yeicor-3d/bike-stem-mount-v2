@@ -9,27 +9,30 @@ except ImportError:
 
 # ================== PARAMETERS ==================
 # 3D printing basics
-tol = 0.1  # Tolerance (tighter than usual)
-wall_min = 0.4  # Minimum wall width
-wall = wall_min * 3  # Recommended width for most walls of this print
-eps = 1e-5  # A small number
+tol = 0.1 * MM  # Tolerance (tighter than usual)
+wall_min = 0.4 * MM  # Minimum wall width
+wall = 3 * wall_min  # Recommended width for most walls of this print
+eps = 1e-5 * MM  # A small number
 
 # Measurements
-screw_length = 1 * CM
-screw_rad = 5/2 * MM
 screw_shank_rad = 7/2 * MM
-washer_outer_rad = 10/2 * MM
-washer_depth = 1 * MM
-nut_rad = 8/2 * MM  # Of the inscribed circle for the exterior hexagon
-nut_depth = 4 * MM
+# screw_rad = 5/2 * MM # M5 screw, unused
+washer_outer_rad = 10/2 * MM + tol
+washer_depth = 1 * MM + 2 * tol
+nut_rad = 8/2 * MM + tol  # Of the inscribed circle for the exterior hexagon
+nut_depth = 4 * MM + 2 * tol
 button_rad = 30 * MM
-button_fillet = (wall + washer_depth + nut_depth + wall) / 2 - eps # max
+
+# Customization
+button_fillet = (2 * wall + washer_depth + nut_depth) / 2 - tol
+number_segments = 8
+segment_overhang = wall
 
 
 # ================== MODELLING ==================
 
 # Outer shell of the whole button
-obj = Circle(button_rad)
+obj = Circle(button_rad - segment_overhang)
 obj = extrude(obj, wall + washer_depth + nut_depth + wall)
 
 # Remove the shank of the screw
@@ -53,11 +56,9 @@ del nut
 # Add a nice fillet to the button
 bb = obj.bounding_box()
 outer_edge_length = obj.edges().group_by(SortBy.LENGTH)[-1][0].length
-number_segments = 8
 segment_width = outer_edge_length / number_segments / 2
-segment_overhang = wall
-extra_segments = Circle(bb.max.X + segment_overhang) - Circle(bb.max.X - wall)
-extra_segments -= PolarLocations(button_rad, number_segments) * (Rectangle(bb.max.X * 2, segment_width))
+extra_segments = Circle(bb.max.X + segment_overhang) - Circle(bb.max.X)
+extra_segments -= PolarLocations(button_rad - segment_overhang, number_segments) * (Rectangle(bb.max.X * 2, segment_width))
 obj_extra_segments = extrude(extra_segments, bb.max.Z)
 obj += obj_extra_segments
 del extra_segments
