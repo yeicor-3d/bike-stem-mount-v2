@@ -15,16 +15,16 @@ wall = 3 * wall_min  # Recommended width for most walls of this print
 eps = 1e-5 * MM  # A small number
 
 # Measurements
-screw_shank_rad = 7/2 * MM
+screw_shank_rad = 7/2 * MM + tol
 # screw_rad = 5/2 * MM # M5 screw, unused
 washer_outer_rad = 10/2 * MM + tol
 washer_depth = 1 * MM + 2 * tol
 nut_rad = 8/2 * MM + tol  # Of the inscribed circle for the exterior hexagon
 nut_depth = 4 * MM + 2 * tol
-button_rad = 30 * MM
+button_rad = 30/2 * MM
 
 # Customization
-button_fillet = (2 * wall + washer_depth + nut_depth) / 2 - tol
+button_fillet = (2 * wall + washer_depth + nut_depth) / 2 - eps
 number_segments = 8
 segment_overhang = wall
 
@@ -56,18 +56,19 @@ del nut
 # Add a nice fillet to the button
 bb = obj.bounding_box()
 outer_edge_length = obj.edges().group_by(SortBy.LENGTH)[-1][0].length
-segment_width = outer_edge_length / number_segments / 2
+segment_width = outer_edge_length / number_segments / 1.25 # Magic number: due to forced fillet inwards
 extra_segments = Circle(bb.max.X + segment_overhang) - Circle(bb.max.X)
-extra_segments -= PolarLocations(button_rad - segment_overhang, number_segments) * (Rectangle(bb.max.X * 2, segment_width))
+extra_segments &= PolarLocations(button_rad - segment_overhang, number_segments) * (Rectangle(bb.max.X * 2, segment_width))
 obj_extra_segments = extrude(extra_segments, bb.max.Z)
 obj += obj_extra_segments
 del extra_segments
 del obj_extra_segments
+to_fillet = obj.edges().filter_by(Axis.Z).group_by(SortBy.LENGTH)[-1]
 to_fillet = obj.edges().group_by(Axis.Z)
 to_fillet = to_fillet[0] + to_fillet[-1]
 to_fillet = to_fillet.group_by(SortBy.LENGTH)
 to_fillet = to_fillet[0] + to_fillet[1] + to_fillet[2]
-obj = fillet(to_fillet, button_fillet)
+obj = obj.fillet(button_fillet, to_fillet)
 del to_fillet
 
 
