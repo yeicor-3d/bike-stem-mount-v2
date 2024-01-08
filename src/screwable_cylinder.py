@@ -10,7 +10,7 @@ from global_params import *
 
 @dataclass(kw_only=True)
 class ScrewableCylinder(BasePartObject):
-    screw_length: float = 8
+    screw_length: float = 12
     screw_diameter: float = 5  # M5
     screw_head_diameter: float = 8.5  # M5
     screw_head_height: float = 5  # M5
