@@ -6,9 +6,9 @@ from screwable_cylinder import ScrewableCylinder
 
 # ================== PARAMETERS ==================
 
-stem_width = stem_height = 35
-stem_fillet = 5
-stem_length = 30
+stem_width = stem_height = 36.5
+stem_fillet = 8
+stem_length = 36.5
 
 # ================== MODELLING ==================
 
@@ -17,6 +17,7 @@ with BuildPart() as stem_wrapper:
     with BuildSketch(Plane.front):  # as cross_section
         Rectangle(stem_width + 2 * wall, stem_height + 2 * wall)
         RectangleRounded(stem_width, stem_height, stem_fillet - wall, mode=Mode.SUBTRACT)
+        # TODO: Inner top/bottom/sides are also rounded (1.5mm towards the inside? deforming the material for now...)
     extrude(amount=stem_length/2, both=True)
     RigidJoint("right", stem_wrapper, faces().group_by(Axis.X)[-1].face().center_location)
 stem_wrapper = stem_wrapper.part
@@ -24,7 +25,7 @@ stem_wrapper = stem_wrapper.part
 # Prepare the screw hole adapter
 screw_hole_base = ScrewableCylinder()
 bb = screw_hole_base.bounding_box()
-eps_offset_loft = 0.1  # Causes broken geometry if too small
+eps_offset_loft = 0.01  # Causes broken geometry if too small
 RigidJoint("left", screw_hole_base, Location((bb.min.X - eps_offset_loft, bb.center().Y, bb.center().Z), (0, 90, 0)))
 
 with BuildPart() as core:
@@ -90,10 +91,10 @@ with BuildPart() as core:
         work_grid = GridLocations(pattern_side, pattern_side, int(
             work_area.size.X // pattern_side), int(work_area.size.Y // pattern_side))
         # This is built by layers:
-        # Layer -1: A side hole to insert the nut (avoid any support)
+        # Layer -1: the nut (break inner top/bottom surfaces)
         with BuildSketch(face):
             with work_grid:
-                Rectangle(nut_circumscribed_diameter + tol * 2, stem_length)
+                RegularPolygon(nut_inscribed_diameter/2 + tol, 6, major_radius=False)
         extrude(amount=-stem_height/2, mode=Mode.SUBTRACT)
         draw_offset = -wall
         # Layer 1: the nut
