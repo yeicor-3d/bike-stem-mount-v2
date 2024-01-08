@@ -140,4 +140,5 @@ except Exception as ex:
     print("Cannot show model, exporting to STL instead (%s)" % ex)
 
 if export:
-    core.export_stl('core.stl')
+    for i, solid in enumerate(core.solids()):
+        solid.export_stl('core-%d.stl' % i)

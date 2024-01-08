@@ -52,3 +52,5 @@ if __name__ == "__main__":
     import ocp_vscode
     part = ScrewableCylinder(rotation=(0, 0, 90))
     ocp_vscode.show_all(render_joints=True)
+    if False:
+        part.export_stl('screwable-cylinder.stl')
