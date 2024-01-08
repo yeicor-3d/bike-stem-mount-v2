@@ -19,26 +19,26 @@ jobs:
       pages: "write"        # to deploy to Pages
       id-token: "write"     # to verify the deployment originates from an appropriate source
 
-    # Deploy to the github-pages environment
-    environment:
-      name: "github-pages"
-      # url: "${{ steps.deployment.outputs.page_url }}"
+    # # Deploy to the github-pages environment
+    # environment:
+    #   name: "github-pages"
+    #   # url: "${{ steps.deployment.outputs.page_url }}"
 
     steps:
       - uses: "actions/checkout@v4"
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
           cache: "pip"
 
       - run: "pip install -r requirements.txt"
 
-      - uses: "Yeicor/cadquery-action@v3.1.0"
+      - uses: "Yeicor/cadquery-action@v3.1.1"
         with:
-          scripts: "main.py"
+          scripts: "src/core.py"
           # formats: "STL|STEP|AMF|SVG|TJS|DXF|VRML|VTP|3MF|GLTF"
-          # website: "."
+          website: "" # Disabled for now
           # website-screenshot: "true"
 
 
