@@ -6,18 +6,32 @@ from screwable_cylinder import ScrewableCylinder
 
 # ================== PARAMETERS ==================
 
-stem_width = stem_height = 36.5
-stem_fillet = 8
+stem_max_width = stem_max_height = 36.5
+stem_fillet = 6
+stem_side_bulge = 1  # Removed as an arc from max_width/height until fillet point
 stem_length = 36.5
+
+pattern_side_len = 12
 
 # ================== MODELLING ==================
 
 # Prepare the stem_wrapper
 with BuildPart() as stem_wrapper:
-    with BuildSketch(Plane.front):  # as cross_section
-        Rectangle(stem_width + 2 * wall, stem_height + 2 * wall)
-        RectangleRounded(stem_width, stem_height, stem_fillet - wall, mode=Mode.SUBTRACT)
-        # TODO: Inner top/bottom/sides are also rounded (1.5mm towards the inside? deforming the material for now...)
+    with BuildSketch(Plane.front):
+        # Outer top/bottom/sides are flat
+        Rectangle(stem_max_width + 2 * wall, stem_max_height + 2 * wall)
+        # Remove inner profile
+        with BuildLine(Plane.front):
+            p1 = (stem_max_width/2, 0)
+            p2 = (stem_max_width/2 - stem_side_bulge, stem_max_height/2-stem_side_bulge - stem_fillet)
+            p3_base = (stem_max_width/2-stem_side_bulge - stem_fillet, stem_max_height/2-stem_side_bulge - stem_fillet)
+            p3 = (p3_base[0] + stem_fillet * cos(radians(45)), p3_base[1] + stem_fillet * sin(radians(45)))
+            p4 = (stem_max_width/2-stem_side_bulge - stem_fillet, stem_max_height/2 - stem_side_bulge)
+            p5 = (0, stem_max_height/2)
+            Spline([p1, p2, p3, p4, p5], tangents=[(0, 1), (-1, 0)])
+            mirror(about=Plane.YZ)
+            mirror(about=Plane.XY)
+        make_face(mode=Mode.SUBTRACT)
     extrude(amount=stem_length/2, both=True)
     RigidJoint("right", stem_wrapper, faces().group_by(Axis.X)[-1].face().center_location)
 stem_wrapper = stem_wrapper.part
@@ -65,9 +79,10 @@ with BuildPart() as core:
         assert core.part.is_valid()
         assert len(core.part.solids()) == 1
         del face, cut_plane
-        # Fillet some edges of supports
-        fillet(faces().group_by(Axis.Z)[face_search].face().outer_wire().edges() -
-               edges().group_by(Axis.X)[0], wall/2.3)  # Finicky
+        # Fillet outer edges of supports
+        new_face = faces().group_by(Axis.Z)[face_search].face()
+        fillet(new_face.edges() - new_face.edges().group_by(Axis.X)[0], wall/2.3)  # Finicky
+        del new_face
 
     # Mirror to the other side
     mirror(about=Plane.YZ)
@@ -84,18 +99,20 @@ with BuildPart() as core:
     del screw_hole_base
     for face_side in [-1, 1]:  # Bottom and top
         face_search = 0 if face_side < 0 else -1
-        face: Face = faces().group_by(SortBy.AREA)[-1].group_by(Axis.Z)[face_search].face()
+        face: Face = faces().filter_by(
+            GeomType.PLANE).group_by(SortBy.AREA)[-1].group_by(Axis.Z)[face_search].face()
         work_area: BoundBox = face.bounding_box()
-        pattern_side = 10
-        assert pattern_side >= nut_inscribed_diameter + tol * 2 + wall * 2
-        work_grid = GridLocations(pattern_side, pattern_side, int(
-            work_area.size.X // pattern_side), int(work_area.size.Y // pattern_side))
+        min_pattern_side_len = nut_inscribed_diameter + tol * 2 + wall
+        assert pattern_side_len >= min_pattern_side_len, "Pattern side too small (%f < %f)" % (
+            pattern_side_len, min_pattern_side_len)
+        work_grid = GridLocations(pattern_side_len, pattern_side_len, int(
+            work_area.size.X // pattern_side_len), int(work_area.size.Y // pattern_side_len))
         # This is built by layers:
         # Layer -1: the nut (break inner top/bottom surfaces)
         with BuildSketch(face):
             with work_grid:
                 RegularPolygon(nut_inscribed_diameter/2 + tol, 6, major_radius=False)
-        extrude(amount=-stem_height/2, mode=Mode.SUBTRACT)
+        extrude(amount=-stem_fillet, mode=Mode.SUBTRACT)
         draw_offset = -wall
         # Layer 1: the nut
         with BuildSketch(Plane(face.center_location).offset(draw_offset)):
@@ -117,7 +134,7 @@ with BuildPart() as core:
     # Final filletings
     to_fillet = edges().group_by(Axis.Y)[0] + edges().group_by(Axis.Y)[-1] + \
         edges().group_by(Axis.Z)[-1] + edges().group_by(Axis.Z)[0]
-    to_fillet -= to_fillet.filter_by(GeomType.CIRCLE).group_by(SortBy.LENGTH)[1]  # Inner top/bottom circles
+    to_fillet -= to_fillet.filter_by(GeomType.CIRCLE)  # Inner top/bottom circles
     fillet(to_fillet, wall/2.01)
     del to_fillet
 

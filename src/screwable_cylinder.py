@@ -14,8 +14,8 @@ class ScrewableCylinder(BasePartObject):
     screw_diameter: float = 5  # M5
     screw_head_diameter: float = 8.5  # M5
     screw_head_height: float = 5  # M5
-    nut_inscribed_diameter: float = 7  # M5
-    nut_height: float = 2.7  # M5
+    nut_inscribed_diameter: float = 8  # M5
+    nut_height: float = 4  # M5
     wall_size: float = wall
     round: bool = False
     rotation: RotationLike = (0, 0, 0)
