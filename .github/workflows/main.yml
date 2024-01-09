@@ -35,8 +35,4 @@ jobs:
 
       - uses: "Yeicor/cadquery-action@v3.1.1"
         with:
-          scripts: "src/core.py"
-
-
-
-
+          scripts: "src/core.py|src/screwable_cylinder.py|src/module_allen_box.py"
