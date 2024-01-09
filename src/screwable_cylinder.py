@@ -51,4 +51,8 @@ class ScrewableCylinder(BasePartObject):
 
 
 if __name__ == "__main__":
-    show_or_export(ScrewableCylinder(rotation=(0, 0, 90)))
+    part = ScrewableCylinder(rotation=(0, 0, 90))
+    if 'show_object' in globals():  # Needed for CI / cq-editor
+        show_object(part)  # type: ignore
+    else:
+        show_or_export(part)

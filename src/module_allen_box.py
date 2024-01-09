@@ -30,4 +30,8 @@ class ModuleAllenBox(BasePartObject):
 
 
 if __name__ == "__main__":
-    show_or_export(ModuleAllenBox())
+    part = ModuleAllenBox()
+    if 'show_object' in globals():  # Needed for CI / cq-editor
+        show_object(part)  # type: ignore
+    else:
+        show_or_export(part)
