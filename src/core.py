@@ -94,7 +94,7 @@ class Core(BasePartObject):
                 del face, cut_plane
                 # Fillet outer edges of supports
                 new_face = faces().group_by(Axis.Z)[face_search].face()
-                # fillet(new_face.edges() - new_face.edges().group_by(Axis.X)[0], wall/2.5)  # Finicky
+                fillet(new_face.edges() - new_face.edges().group_by(Axis.X)[0], wall/2.5)  # Finicky
                 del new_face
 
             # Mirror to the other side
