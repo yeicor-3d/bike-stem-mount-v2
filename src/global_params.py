@@ -28,11 +28,11 @@ def caller_file() -> str:
 
 
 def export(part: Part) -> None:
-    file_of_caller = caller_file()
-    print("Exporting to STL using ref %s" % file_of_caller)
     if 'show_object' in globals():  # Needed for CI / cq-editor
-        show_object(part, file_of_caller)  # type: ignore
+        show_object(part)  # type: ignore
     else:
+        file_of_caller = caller_file()
+        print("Exporting to STL using ref %s" % file_of_caller)
         for i, solid in enumerate(part.solids()):
             solid.export_stl(file_of_caller[:-3] + (f'_{i}.stl' if len(part.solids()) > 1 else '.stl'))
 
@@ -40,7 +40,7 @@ def export(part: Part) -> None:
 def show_or_export(part: Part) -> None:
     try:
         from ocp_vscode import show
-        show(part, names=[caller_file().split('/')[-1][:-3]], render_joints=True)
+        show(part, render_joints=True)
     except Exception as e:
         print("Error showing part (%s), exporting to STL instead" % e)
         export(part)
