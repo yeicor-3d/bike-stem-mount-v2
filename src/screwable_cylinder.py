@@ -16,8 +16,10 @@ class ScrewableCylinder(BasePartObject):
     screw_head_height: float = 5  # M5
     nut_inscribed_diameter: float = 8  # M5
     nut_height: float = 4  # M5
+
     wall_size: float = wall
     round: bool = False
+
     rotation: RotationLike = (0, 0, 0)
     align: Union[Align, tuple[Align, Align, Align]] = None
     mode: Mode = Mode.ADD
@@ -49,8 +51,4 @@ class ScrewableCylinder(BasePartObject):
 
 
 if __name__ == "__main__":
-    import ocp_vscode
-    part = ScrewableCylinder(rotation=(0, 0, 90))
-    ocp_vscode.show_all(render_joints=True)
-    if False:
-        part.export_stl('screwable-cylinder.stl')
+    show_or_export(ScrewableCylinder(rotation=(0, 0, 90)))
