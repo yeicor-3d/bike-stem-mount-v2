@@ -10,12 +10,12 @@ from screwable_cylinder import ScrewableCylinder
 @dataclass(kw_only=True)
 class Core(BasePartObject):
 
-    stem_max_width = stem_max_height = 36.5
-    stem_fillet = 6
+    stem_max_width = stem_max_height = 38
+    stem_fillet = 9
     stem_side_bulge = 1  # Removed as an arc from max_width/height until fillet point
-    stem_length = 36.5
+    stem_length = 30
 
-    pattern_side_len = 12
+    pattern_side_len = 10
 
     rotation: RotationLike = (0, 0, 0)
     align: Union[Align, tuple[Align, Align, Align]] = None
@@ -53,10 +53,10 @@ class Core(BasePartObject):
         eps_offset_loft = 0.01  # Causes broken geometry if too small
         RigidJoint("left", screw_hole_base, Location(
             (bb.min.X - eps_offset_loft, bb.center().Y, bb.center().Z), (0, 90, 0)))
+        stem_wrapper.joints["right"].connect_to(screw_hole_base.joints["left"])
 
         with BuildPart() as core:
-            # Place the screw_hole base
-            stem_wrapper.joints["right"].connect_to(screw_hole_base.joints["left"])
+            # Add the placed screw_hole base
             add(screw_hole_base)
 
             # Attach the screw hole adapter to the stem_wrapper
@@ -115,7 +115,7 @@ class Core(BasePartObject):
                 face: Face = faces().filter_by(
                     GeomType.PLANE).group_by(SortBy.AREA)[-1].group_by(Axis.Z)[face_search].face()
                 work_area: BoundBox = face.bounding_box()
-                min_pattern_side_len = nut_circumscribed_diameter + tol * 2 + wall * 2
+                min_pattern_side_len = nut_circumscribed_diameter + tol * 2  # Allow shared corners
                 assert self.pattern_side_len >= min_pattern_side_len, "Pattern side too small (%f < %f)" % (
                     self.pattern_side_len, min_pattern_side_len)
                 work_grid = GridLocations(self.pattern_side_len, self.pattern_side_len, int(
