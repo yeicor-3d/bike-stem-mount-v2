@@ -11,7 +11,7 @@ from screwable_cylinder import ScrewableCylinder
 class Core(BasePartObject):
 
     stem_max_width = stem_max_height = 38
-    stem_fillet = 9
+    stem_fillet = 10
     stem_side_bulge = 1  # Removed as an arc from max_width/height until fillet point
     stem_length = 30
 
