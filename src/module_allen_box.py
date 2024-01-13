@@ -1,12 +1,15 @@
 # %%
 from dataclasses import dataclass
-from typing import Union
+from typing import NamedTuple, Union
 from build123d import *
 from math import *
 from global_params import *
 from core import *
 
 # ================== MODELLING ==================
+
+
+Grid2D = NamedTuple('Grid2D', [('x', int), ('y', int)])
 
 
 @dataclass(kw_only=True)
@@ -16,7 +19,9 @@ class ModuleAllenBox(BasePartObject):
     height = 20
     depth = 70
 
-    round: bool = False
+    grid_top = Grid2D(4, 3)
+    grid_bottom = Grid2D(4, 10)
+
     rotation: RotationLike = (0, 0, 0)
     align: Union[Align, tuple[Align, Align, Align]] = None
     mode: Mode = Mode.ADD

@@ -5,6 +5,7 @@ from typing import Union
 from build123d import *
 from global_params import *
 from screwable_cylinder import ScrewableCylinder
+from conn_grid import *
 
 
 @dataclass(kw_only=True)
@@ -14,8 +15,6 @@ class Core(BasePartObject):
     stem_fillet = 10
     stem_side_bulge = 1  # Removed as an arc from max_width/height until fillet point
     stem_length = 30
-
-    pattern_side_len = 10
 
     rotation: RotationLike = (0, 0, 0)
     align: Union[Align, tuple[Align, Align, Align]] = None
@@ -69,87 +68,67 @@ class Core(BasePartObject):
             assert core.part.is_valid()
             assert len(core.part.solids()) == 1
             core.part = core.part.clean()
-            del loft_screw_hole_face, loft_stem_face
 
             # Make it 3D printable by adding top and bottom supports
             for face_side in [-1, 1]:  # Bottom and top
                 face_search = 0 if face_side < 0 else -1
-                face = faces().group_by(Axis.Z)[face_search].face()
+                bottom_face = faces().group_by(Axis.Z)[face_search].face()
                 extreme = stem_wrapper.bounding_box().min if face_side < 0 else stem_wrapper.bounding_box().max
-                extreme.Z += face_side * (screw_hole_base.nut_height + tol - wall /
-                                          2)  # Ignore fillet, but add top connectors
-                max_extrude = face.center().Z - extreme.Z
-                extrude(face, amount=abs(max_extrude))
+                extreme.Z += face_side * (screw_hole_base.nut_height + 2 * tol)
+                max_extrude = bottom_face.center().Z - extreme.Z
+                extrude(bottom_face, amount=abs(max_extrude))
                 assert core.part.is_valid()
-                del extreme
                 # Prepare a cut plane
-                max_offset = face.bounding_box().size.X
+                max_offset = bottom_face.bounding_box().size.X
                 cut_plane_angle = degrees(atan2(max_extrude, max_offset))
                 print(cut_plane_angle)
-                bb = face.bounding_box()
+                bb = bottom_face.bounding_box()
                 cut_plane = Plane(Location((bb.max.X, bb.center().Y, bb.center().Z), (0, -cut_plane_angle, 0)))
                 split(bisect_by=cut_plane, keep=Keep.TOP if face_side < 0 else Keep.BOTTOM)
                 assert core.part.is_valid()
                 assert len(core.part.solids()) == 1
-                del face, cut_plane
                 # Fillet outer edges of supports
                 new_face = faces().group_by(Axis.Z)[face_search].face()
                 fillet(new_face.edges() - new_face.edges().group_by(Axis.X)[0], wall/2.5)  # Finicky
-                del new_face
 
             # Mirror to the other side
             mirror(about=Plane.YZ)
 
             # Add the core stem_wrapper
             add(stem_wrapper)
-            del stem_wrapper
 
             # Add a top and bottom pattern to insert nuts to connect attachments, keeping it 3D-printable
-            nut_height = screw_hole_base.nut_height
-            nut_inscribed_diameter = screw_hole_base.nut_inscribed_diameter
-            nut_circumscribed_diameter = nut_inscribed_diameter / cos(radians(360/6/2))
-            screw_diameter = screw_hole_base.screw_diameter
-            del screw_hole_base
             for face_side in [-1, 1]:  # Bottom and top
                 face_search = 0 if face_side < 0 else -1
-                face: Face = faces().filter_by(
+                bottom_face: Face = faces().filter_by(
                     GeomType.PLANE).group_by(SortBy.AREA)[-1].group_by(Axis.Z)[face_search].face()
-                work_area: BoundBox = face.bounding_box()
-                min_pattern_side_len = nut_circumscribed_diameter + tol * 2  # Allow shared corners
-                assert self.pattern_side_len >= min_pattern_side_len, "Pattern side too small (%f < %f)" % (
-                    self.pattern_side_len, min_pattern_side_len)
-                work_grid = GridLocations(self.pattern_side_len, self.pattern_side_len, int(
-                    work_area.size.X // self.pattern_side_len), int(work_area.size.Y // self.pattern_side_len))
-                # This is built by layers:
-                # Layer -1: the nut (break inner top/bottom surfaces)
-                with BuildSketch(face):
-                    with work_grid:
-                        RegularPolygon(nut_inscribed_diameter/2 + tol, 6, major_radius=False)
-                extrude(amount=-self.stem_fillet, mode=Mode.SUBTRACT)
-                draw_offset = -wall
-                # Layer 1: the nut
-                with BuildSketch(Plane(face.center_location).offset(draw_offset)):
-                    work_area: BoundBox = face.bounding_box()
-                    Rectangle(work_area.size.X, work_area.size.Y)  # Default to filled
-                    with work_grid:
-                        RegularPolygon(nut_inscribed_diameter/2 + tol, 6, major_radius=False, mode=Mode.SUBTRACT)
-                extrude(amount=nut_height + tol)
-                draw_offset += nut_height + tol
-                # Layer 2: The hole for the screw
-                with BuildSketch(Plane(face.center_location).offset(draw_offset)):
-                    work_area: BoundBox = face.bounding_box()
-                    Rectangle(work_area.size.X, work_area.size.Y)  # Default to filled
-                    with work_grid:
-                        Circle(screw_diameter/2 + tol, mode=Mode.SUBTRACT)
-                extrude(amount=wall)
-                del face, work_grid
+                work_area: BoundBox = bottom_face.bounding_box()
+                pattern_side_len = GridBase.dimensions
+                work_grid = Grid2D(int(work_area.size.X // pattern_side_len.x),
+                                   int(work_area.size.Y // pattern_side_len.y))
+                total_dim = Grid2DF(work_area.size.X, work_area.size.Y)
+                nut_holes = GridNutHoles(repeat=work_grid, total_dimensions=total_dim, rounded=False)
+                with BuildPart(mode=Mode.PRIVATE) as grid_conn:
+                    GridStack(parts=[nut_holes,
+                                     GridScrewThreadHoles(repeat=work_grid, wrapped_screw_length=wall,  # Minimal screw length
+                                                          total_dimensions=total_dim, rounded=False),
+                                     ])
+                place_at = Location((0, 0, bottom_face.center().Z), (0, 180 if face_side == -1 else 0, 0))
+                grid_conn_placed = grid_conn.part.moved(place_at)
+                add(grid_conn_placed)
+
+                # Break inner top/bottom surfaces
+                bottom_face = grid_conn.faces().group_by(Axis.Z)[0].face()
+                bottom_face_inner_edges = bottom_face.edges() - bottom_face.outer_wire().edges()
+                for wire in Wire.combine(bottom_face_inner_edges):
+                    extrude(Face.make_from_wires(wire).move(place_at), amount=-self.stem_fillet, mode=Mode.SUBTRACT)
 
             # Final filletings
             to_fillet = edges().group_by(Axis.Y)[0] + edges().group_by(Axis.Y)[-1] + \
                 edges().group_by(Axis.Z)[-1] + edges().group_by(Axis.Z)[0]
             to_fillet -= to_fillet.filter_by(GeomType.CIRCLE)  # Inner top/bottom circles
-            fillet(to_fillet, wall/2.01)
-            del to_fillet
+            to_fillet -= to_fillet.filter_by(GeomType.BSPLINE)  # Inner section of stem
+            fillet(to_fillet, wall/1.01)
 
             # Cut the hole piece in two, to be connected by screws
             bb = core.part.bounding_box()

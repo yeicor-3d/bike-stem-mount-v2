@@ -1,5 +1,5 @@
 /venv/
 /build/
 /.idea/
-*.stl
+/build/
 __pycache__/

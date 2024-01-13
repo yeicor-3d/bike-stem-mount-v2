@@ -1,4 +1,5 @@
 import inspect
+import os
 from typing import Callable
 from build123d import *
 
@@ -29,19 +30,21 @@ def caller_file() -> str:
 
 def export(part: Part) -> None:
     file_of_caller = caller_file()
-    print("Exporting to STL using ref %s" % file_of_caller)
+    print("Exporting to STEP using ref %s" % file_of_caller)
     for i, solid in enumerate(part.solids()):
-        solid.export_stl(file_of_caller[:-3] + (f'_{i}.stl' if len(part.solids()) > 1 else '.stl'))
+        if 'src/' in file_of_caller:
+            file_in_build_dir = 'build/'.join(file_of_caller.rsplit('src/', 1))  # Last src/ -> build/
+        else:
+            file_in_build_dir = '../build/' + file_of_caller  # No src/ -> build/
+        os.makedirs(os.path.dirname(file_in_build_dir), exist_ok=True)
+        solid.export_step(file_in_build_dir[:-3] + (f'_{i}' if len(part.solids()) > 1 else '') + '.step')
 
 
 def show_or_export(part: Part) -> None:
     try:
-        import ocp_vscode
-        ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.CENTER,
-                                measure_tools=True, render_joints=True)
-        ocp_vscode.show(part, render_joints=True)
+        show_all()()
     except Exception as e:
-        print("Error showing part (%s), exporting to STL instead" % e)
+        print("Error showing part (%s), exporting to STEP instead" % e)
         export(part)
 
 
