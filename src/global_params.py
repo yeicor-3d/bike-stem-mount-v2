@@ -13,10 +13,8 @@ eps = 1e-5 * MM  # A small number
 # Some common utilities
 
 def show_all() -> Callable[[], None]:
-    import ocp_vscode
-    ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.CENTER,
-                            measure_tools=True, render_joints=True)
-    return ocp_vscode.show_all
+    import yacv_server
+    return yacv_server.show_all
 
 
 def caller_file() -> str:

@@ -28,7 +28,7 @@ class ModuleAllenBox(BasePartObject):
 
     def __post_init__(self):
         with BuildPart(Plane.front) as part:
-            Box(self.width+2*wall, self.height+2*wall, self.depth)
+            Box(self.width + 2 * wall, self.height + 2 * wall, self.depth)
             Box(self.width, self.height, self.depth, mode=Mode.SUBTRACT)
         super().__init__(part=part.part, rotation=self.rotation,
                          align=self.align, mode=self.mode)

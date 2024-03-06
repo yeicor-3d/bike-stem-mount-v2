@@ -5,7 +5,6 @@ from typing import NamedTuple, Optional, Union
 from build123d import *
 from math import *
 from global_params import *
-from core import *
 from screwable_cylinder import ScrewableCylinder
 
 # ================== MODELLING ==================

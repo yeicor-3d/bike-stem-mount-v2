@@ -33,6 +33,4 @@ jobs:
 
       - run: "pip install -r requirements.txt"
 
-      - uses: "Yeicor/cadquery-action@v3.1.1"
-        with:
-          scripts: "src/core.py|src/screwable_cylinder.py|src/module_allen_box.py"
+      # TODO
