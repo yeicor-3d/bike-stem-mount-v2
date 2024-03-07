@@ -2,7 +2,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import NamedTuple, Optional, Union
-from build123d import *
 from math import *
 from global_params import *
 from screwable_cylinder import ScrewableCylinder

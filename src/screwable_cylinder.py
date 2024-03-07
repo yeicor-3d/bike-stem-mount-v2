@@ -1,4 +1,5 @@
 # %%
+import time
 from dataclasses import dataclass
 from typing import Union
 from build123d import *
