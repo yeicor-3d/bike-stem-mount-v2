@@ -35,8 +35,8 @@ jobs:
 
       # Build
       - run: "echo 'YACV_DISABLE_SERVER=True' >> $GITHUB_ENV"
-      - run: "python src/conn_grid.py"
-      - run: "python src/screwable_cylinder.py"
+      #- run: "python src/conn_grid.py"
+      #- run: "python src/screwable_cylinder.py"
       - run: "python src/core.py"
       - run: "python src/module_allen_box.py"
 
@@ -49,11 +49,11 @@ jobs:
         uses: "actions/deploy-pages@v4"
 
       # If release...
-#      - run: 'zip -r exports.zip export'
-#      - uses: "svenstaro/upload-release-action@v2"
-#        with:
-#          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#          file: "exports.zip"
-#          tag: "${{ github.ref }}"
-#          overwrite: true
+      #- run: 'zip -r exports.zip export'
+      #- uses: "svenstaro/upload-release-action@v2"
+      #  with:
+      #    repo_token: "${{ secrets.GITHUB_TOKEN }}"
+      #    file: "exports.zip"
+      #    tag: "${{ github.ref }}"
+      #    overwrite: true
 
