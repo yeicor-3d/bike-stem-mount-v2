@@ -7,7 +7,7 @@ from yacv_server import *
 
 from core import grid as core_grid
 from global_params import *
-from src.conn_grid import Grid2D
+from conn_grid import Grid2D
 
 
 # ================== MODELLING ==================
