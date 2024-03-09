@@ -56,7 +56,6 @@ class ScrewableCylinder(bd.BasePartObject):
 
 if __name__ == "__main__":
     screwable_cylinder = ScrewableCylinder(rotation=(0, 0, 90))
+    yacv.show_all()
     if os.getenv('CI', '') != '':
-        yacv.export_all('export')
-    else:
-        yacv.show_all()
+        yacv.export_all(os.path.join(os.path.dirname(__file__), '..', 'export'))

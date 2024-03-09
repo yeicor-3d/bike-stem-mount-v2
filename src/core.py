@@ -134,7 +134,6 @@ if __name__ == "__main__":
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
+    show_all()
     if os.getenv('CI', '') != '':
-        export_all('export')
-    else:
-        show_all()
+        yacv.export_all(os.path.join(os.path.dirname(__file__), '..', 'export'))

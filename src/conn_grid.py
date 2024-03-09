@@ -121,7 +121,6 @@ class GridStack(bd.BasePartObject):
 if __name__ == "__main__":
     conn_grid = GridStack(parts=[GridNutHoles(repeat=Grid2D(4, 3)), GridScrewThreadHoles(
         repeat=Grid2D(4, 7), wrapped_screw_length=8), GridScrewHeadHoles(repeat=Grid2D(4, 5))])
+    yacv.show_all()
     if os.getenv('CI', '') != '':
-        yacv.export_all('export')
-    else:
-        yacv.show_all()
+        yacv.export_all(os.path.join(os.path.dirname(__file__), '..', 'export'))
