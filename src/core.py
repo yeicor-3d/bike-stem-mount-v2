@@ -1,11 +1,19 @@
 # %%
+from build123d import *
 from yacv_server import *
+
 from conn_grid import *
 
-stem_max_width = stem_max_height = 38
+stem_max_width = 38
+stem_max_height = 38
 stem_fillet = 10
 stem_side_bulge = 1  # Removed as an arc from max_width/height until fillet point
 stem_length = 30
+
+pattern_side_len = GridBase.dimensions
+grid = Grid2D(int((stem_max_width + 2 * wall) // pattern_side_len.x),
+              int(stem_length // pattern_side_len.y))
+grid_dim = Grid2DF(stem_max_width + 2 * wall, stem_length)
 
 
 def build_core():
@@ -90,17 +98,12 @@ def build_core():
             face_search = 0 if face_side < 0 else -1
             bottom_face: Face = faces().filter_by(
                 GeomType.PLANE).group_by(SortBy.AREA)[-1].group_by(Axis.Z)[face_search].face()
-            work_area: BoundBox = bottom_face.bounding_box()
-            pattern_side_len = GridBase.dimensions
-            work_grid = Grid2D(int(work_area.size.X // pattern_side_len.x),
-                               int(work_area.size.Y // pattern_side_len.y))
-            total_dim = Grid2DF(work_area.size.X, work_area.size.Y)
-            nut_holes = GridNutHoles(repeat=work_grid, total_dimensions=total_dim, rounded=False)
+            nut_holes = GridNutHoles(repeat=grid, total_dimensions=grid_dim, rounded=False)
             with BuildPart(mode=Mode.PRIVATE) as grid_conn:
                 GridStack(parts=[nut_holes,
-                                 GridScrewThreadHoles(repeat=work_grid, wrapped_screw_length=wall,
+                                 GridScrewThreadHoles(repeat=grid, wrapped_screw_length=wall,
                                                       # Minimal screw length
-                                                      total_dimensions=total_dim, rounded=False),
+                                                      total_dimensions=grid_dim, rounded=False),
                                  ])
             place_at = Location((0, 0, bottom_face.center().Z), (0, 180 if face_side == -1 else 0, 0))
             grid_conn_placed = grid_conn.part.moved(place_at)
@@ -129,6 +132,7 @@ def build_core():
 if __name__ == "__main__":
     part = build_core()
     import logging
+
     logging.basicConfig(level=logging.DEBUG)
     if os.getenv('CI', '') != '':
         export_all('export')

@@ -1,15 +1,16 @@
 # %%
 from dataclasses import dataclass
-from typing import NamedTuple, Union
+from typing import Union
+
 from build123d import *
-from math import *
+from yacv_server import *
+
+from core import grid as core_grid
 from global_params import *
-from core import *
+from src.conn_grid import Grid2D
+
 
 # ================== MODELLING ==================
-
-
-Grid2D = NamedTuple('Grid2D', [('x', int), ('y', int)])
 
 
 @dataclass(kw_only=True)
@@ -19,7 +20,7 @@ class ModuleAllenBox(BasePartObject):
     height = 20
     depth = 70
 
-    grid_top = Grid2D(4, 3)
+    grid_top = core_grid
     grid_bottom = Grid2D(4, 10)
 
     rotation: RotationLike = (0, 0, 0)
@@ -36,7 +37,10 @@ class ModuleAllenBox(BasePartObject):
 
 if __name__ == "__main__":
     part = ModuleAllenBox()
-    if 'show_object' in globals():  # Needed for CI / cq-editor
-        show_object(part)  # type: ignore
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
+    if os.getenv('CI', '') != '':
+        export_all('export')
     else:
-        show_or_export(part)
+        show_all()
