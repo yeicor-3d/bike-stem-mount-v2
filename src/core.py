@@ -130,7 +130,7 @@ def build_core():
 
 
 if __name__ == "__main__":
-    part = build_core()
+    core = build_core()
     import logging
 
     logging.basicConfig(level=logging.DEBUG)

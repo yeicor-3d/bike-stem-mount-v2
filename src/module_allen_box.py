@@ -36,7 +36,7 @@ class ModuleAllenBox(BasePartObject):
 
 
 if __name__ == "__main__":
-    part = ModuleAllenBox()
+    module_allen_box = ModuleAllenBox()
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
