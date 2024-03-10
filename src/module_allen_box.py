@@ -10,9 +10,16 @@ from src.global_params import wall
 
 # %% ================== MODELLING ==================
 
-box_width = max(grid_dim[0], 40 * MM)
-box_length = max(grid_dim[1], 35 * MM)
-box_height = 20 * MM
+# https://www.amazon.es/dp/B07ZMXQ68T
+box_min_width = 35.5 * MM
+box_max_width = 43 * MM
+box_min_length = 42 * MM
+box_max_length = 70 * MM
+box_height = 23 * MM
+screw_max_diameter = 9 * MM
+
+box_width = max(grid_dim[0], box_max_width)
+box_length = max(grid_dim[1], box_max_length)
 
 with BuildPart() as conn_core:
     with BuildPart(mode=Mode.PRIVATE) as grid_conn:
@@ -25,10 +32,10 @@ with BuildPart() as conn_core:
     RigidJoint(label="conn_core", joint_location=faces().group_by(Axis.Z)[0].face().center_location)
 
 with BuildPart() as box:
-    Box(box_width, box_length, box_height)
-    Box(box_width - 2 * wall, box_length - 2 * wall, box_height, mode=Mode.SUBTRACT)
-    Box(box_width - 2 * wall, box_length, box_height - 2 * wall, mode=Mode.SUBTRACT)
-    Box(box_width, box_length - 2 * wall, box_height - 2 * wall, mode=Mode.SUBTRACT)
+    Box(box_max_width + 2 * wall, box_length + 2 * wall, box_height + 2 * wall)
+    Box(box_max_width + 2 * wall, box_length, box_height, mode=Mode.SUBTRACT)
+    Box(box_min_width, box_length + 2 * wall, box_height, mode=Mode.SUBTRACT)
+    Box(box_min_width, box_length, box_height + 2 * wall, mode=Mode.SUBTRACT)
 
     loc = faces().group_by(Axis.Z)[-1].face().center_location
     loc.orientation = Vector(loc.orientation.X + 180, loc.orientation.Y, loc.orientation.Z)
@@ -36,14 +43,13 @@ with BuildPart() as box:
     del loc
 
 conn_core.joints["conn_core"].connect_to(box.joints["top_conn_core"])
-part = conn_core.part + box.part
+module_allen_box = conn_core.part + box.part
+show(box.part)
 del conn_core, box
-show(part, names='conn_core')
 
 # %% ================== EXPORT ==================
 
 if __name__ == "__main__":
-    module_allen_box = part
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
