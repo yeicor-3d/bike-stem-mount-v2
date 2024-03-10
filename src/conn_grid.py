@@ -2,12 +2,14 @@
 import os
 from abc import abstractmethod
 from dataclasses import dataclass
+from math import cos, radians
 from typing import NamedTuple, Optional, Union
-from math import *
-from global_params import *
-from screwable_cylinder import ScrewableCylinder
+
 import build123d as bd
 import yacv_server as yacv
+
+from src.global_params import wall, tol
+from src.screwable_cylinder import ScrewableCylinder
 
 # ================== MODELLING ==================
 
@@ -41,7 +43,7 @@ class GridBase(bd.BasePartObject):
             if not inverted:
                 if self.rounded:
                     bd.RectangleRounded(self.total_dimensions.x, self.total_dimensions.y,
-                                     (self.dimensions.x + self.dimensions.y)/2 / 2)
+                                        (self.dimensions.x + self.dimensions.y) / 2 / 2)
                 else:
                     bd.Rectangle(self.total_dimensions.x, self.total_dimensions.y)
             with bd.GridLocations(self.dimensions.x, self.dimensions.y, self.repeat.x, self.repeat.y):
@@ -63,9 +65,9 @@ class GridNutHoles(GridBase):
     depth: float = ScrewableCylinder.nut_height
 
     def _build_sketch(self, mode: bd.Mode):
-        major_radius = self.minor_radius / cos(radians(360/6/2))
-        assert major_radius + tol < self.dimensions.x/2
-        assert major_radius + tol < self.dimensions.y/2
+        major_radius = self.minor_radius / cos(radians(360 / 6 / 2))
+        assert major_radius + tol < self.dimensions.x / 2
+        assert major_radius + tol < self.dimensions.y / 2
         bd.RegularPolygon(major_radius, 6, mode=mode)
 
     @property
@@ -75,7 +77,7 @@ class GridNutHoles(GridBase):
 
 @dataclass(kw_only=True)
 class GridScrewHeadHoles(GridBase):
-    radius = ScrewableCylinder.screw_head_diameter/2
+    radius = ScrewableCylinder.screw_head_diameter / 2
     depth: float = ScrewableCylinder.screw_head_height
 
     def _build_sketch(self, mode: bd.Mode):
@@ -88,7 +90,7 @@ class GridScrewHeadHoles(GridBase):
 
 @dataclass(kw_only=True)
 class GridScrewThreadHoles(GridScrewHeadHoles):
-    radius = ScrewableCylinder.screw_diameter/2
+    radius = ScrewableCylinder.screw_diameter / 2
     wrapped_screw_length: float
 
     def _build_sketch(self, mode: bd.Mode):

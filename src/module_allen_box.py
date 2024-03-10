@@ -1,16 +1,12 @@
 # %%
-
-# Ensure python path is set to the root of the project
-import sys
+import os
 
 from build123d import *
-from yacv_server import *
+from yacv_server import show, show_all, export_all
 
-sys.path.append(os.path.join(os.path.abspath(''), 'src'))  # FIXME
-
-from core import grid, grid_dim
-from conn_grid import GridStack, GridScrewHeadHoles, GridScrewThreadHoles
-from global_params import wall
+from src.conn_grid import GridStack, GridScrewHeadHoles, GridScrewThreadHoles
+from src.core import grid, grid_dim
+from src.global_params import wall
 
 # %% ================== MODELLING ==================
 
@@ -42,7 +38,7 @@ with BuildPart() as box:
 conn_core.joints["conn_core"].connect_to(box.joints["top_conn_core"])
 part = conn_core.part + box.part
 del conn_core, box
-show(part, 'conn_core')
+show(part, names='conn_core')
 
 # %% ================== EXPORT ==================
 

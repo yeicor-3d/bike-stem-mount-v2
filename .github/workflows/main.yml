@@ -27,18 +27,19 @@ jobs:
     steps:
       # Prepare
       - uses: "actions/checkout@v4"
+      - run: "pip install poetry"
       - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
-          cache: "pip"
-      - run: "pip install -r requirements.txt"
+          cache: "poetry"
+      - run: "poetry install"
 
       # Build
       - run: "echo 'YACV_DISABLE_SERVER=True' >> $GITHUB_ENV"
-      #- run: "python src/conn_grid.py"
-      #- run: "python src/screwable_cylinder.py"
-      - run: "python src/core.py"
-      - run: "python src/module_allen_box.py"
+      #- run: "poetry run python src/conn_grid.py"
+      #- run: "poetry run python src/screwable_cylinder.py"
+      - run: "poetry run python src/core.py"
+      - run: "poetry run python src/module_allen_box.py"
 
       # Deploy
       - uses: "actions/configure-pages@v4"
