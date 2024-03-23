@@ -303,17 +303,6 @@ test = ["pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "testpath"]
 test-extra = ["curio", "ipython[test]", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.23)", "pandas", "trio"]
 
 [[package]]
-name = "iterators"
-version = "0.2.0"
-description = "Iterator utility classes and functions"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "iterators-0.2.0-py3-none-any.whl", hash = "sha256:1d7ff03f576c9de0e01bac66209556c066d6b1fc45583a99cfc9f4645be7900e"},
-    {file = "iterators-0.2.0.tar.gz", hash = "sha256:e9927a1ea1ef081830fd1512f3916857c36bd4b37272819a6cd29d0f44431b97"},
-]
-
-[[package]]
 name = "jedi"
 version = "0.19.1"
 description = "An autocompletion tool for Python that can be used for text editors."
@@ -945,22 +934,21 @@ files = [
 
 [[package]]
 name = "yacv-server"
-version = "0.6.15"
+version = "0.6.18"
 description = "Yet Another CAD Viewer (server)"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "yacv_server-0.6.15-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:36e90e1e0fdd23f8aa5dc0b6c9efb8dc69f94b196f964456c0c0872a08a6892b"},
-    {file = "yacv_server-0.6.15.tar.gz", hash = "sha256:67690b2ceffdca1547c3b73102c2426a519b7fdfb09b3f87d423dfb18ad748bb"},
+    {file = "yacv_server-0.6.18-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:6d63a9d5a701fe909686bb50ce85b38d1a9a514717d407a5b913024970d931a1"},
+    {file = "yacv_server-0.6.18.tar.gz", hash = "sha256:9b1dbde8c43280f6238cecee6996c4812ff26ceffcab2aa1d6cc8fc6cf30bde5"},
 ]
 
 [package.dependencies]
 build123d = ">=0.4.0,<0.5.0"
-iterators = ">=0.2.0,<0.3.0"
 pillow = ">=10.2.0,<11.0.0"
 pygltflib = ">=1.16.2,<2.0.0"
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "15e16c9abd985831c6108c65f34dd967b74f87bd1cefb923f6579769bbe93641"
+content-hash = "0dbb6f375b18732054a3ffe8ac8a969fcf0e0ca87cd0d5152644d78a3b8c77a6"
