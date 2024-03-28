@@ -27,6 +27,8 @@ jobs:
     steps:
       # Prepare
       - uses: "actions/checkout@v4"
+        with:
+          lfs: "true"
       - run: "pip install poetry"
       - uses: "actions/setup-python@v5"
         with:
@@ -40,6 +42,7 @@ jobs:
       #- run: "poetry run python src/screwable_cylinder.py"
       - run: "poetry run python src/core.py"
       - run: "poetry run python src/module_allen_box.py"
+      - run: "cp assets/*.glb export/"
 
       # Deploy
       - uses: "actions/configure-pages@v4"

@@ -15,7 +15,7 @@ box_min_width = 35.5 * MM
 box_max_width = 43 * MM
 box_min_length = 42 * MM
 box_max_length = 70 * MM
-box_height = 23 * MM
+box_height = 24.5 * MM
 screw_max_diameter = 9 * MM
 
 box_width = max(grid_dim[0], box_max_width)
@@ -29,23 +29,36 @@ with BuildPart() as conn_core:
                                               total_dimensions=grid_dim, rounded=False)])
     add(grid_conn)
     del grid_conn
-    RigidJoint(label="conn_core", joint_location=faces().group_by(Axis.Z)[0].face().center_location)
+    loc = Location(faces().group_by(Axis.Z)[0].edges().group_by(Axis.Y)[-1].edge().center())
+    RigidJoint(label="conn_core", joint_location=loc * Location((0, 10, wall)))
 
 with BuildPart() as box:
     Box(box_max_width + 2 * wall, box_length + 2 * wall, box_height + 2 * wall)
-    Box(box_max_width + 2 * wall, box_length, box_height, mode=Mode.SUBTRACT)
-    Box(box_min_width, box_length + 2 * wall, box_height, mode=Mode.SUBTRACT)
-    Box(box_min_width, box_length, box_height + 2 * wall, mode=Mode.SUBTRACT)
+    Box(box_max_width + 2 * wall, box_length - 4 * wall, box_height, mode=Mode.SUBTRACT)
+    with Locations(Location((0, -wall, 0))):
+        Box(box_min_width, box_length + wall, box_height, mode=Mode.SUBTRACT)
 
-    loc = faces().group_by(Axis.Z)[-1].face().center_location
-    loc.orientation = Vector(loc.orientation.X + 180, loc.orientation.Y, loc.orientation.Z)
+    loc = Location(faces().group_by(Axis.Z)[-1].edges().group_by(Axis.Y)[-1].edge().center())
     RigidJoint(label="top_conn_core", joint_location=loc)
+
     del loc
 
-conn_core.joints["conn_core"].connect_to(box.joints["top_conn_core"])
+box.joints["top_conn_core"].connect_to(conn_core.joints["conn_core"])
+# Avoid screw collisions by extending screw holes vertically
+all_faces = Compound([Face(wire) for wire in conn_core.faces().group_by(Axis.Z)[0].face().inner_wires()])
+# noinspection PyTypeChecker
+box.part -= extrude(all_faces.faces(), box_height * 2, both=True)
+del all_faces
+
 module_allen_box = conn_core.part + box.part
-show(box.part)
 del conn_core, box
+
+base_path = os.path.join(os.path.dirname(__file__), '..') if "__file__" in locals() else os.getcwd()
+with open(os.path.join(base_path, 'assets', 'allen-lowpoly.glb'), 'rb') as f:
+    allen_glb = f.read()
+
+show_all()
+show(allen_glb, names="allen_3d_scan", auto_clear=False)
 
 # %% ================== EXPORT ==================
 
@@ -53,7 +66,6 @@ if __name__ == "__main__":
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    show_all()
     if os.getenv('CI', '') != '':
         export_all(os.path.join(os.path.dirname(__file__), '..', 'export'),
                    export_filter=lambda name, obj: name == 'module_allen_box')
