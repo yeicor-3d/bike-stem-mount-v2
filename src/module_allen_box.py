@@ -2,6 +2,7 @@
 import os
 
 from build123d import *
+from build123d import export_stl
 from yacv_server import show, show_all, export_all
 
 from src.conn_grid import GridStack, GridScrewHeadHoles, GridScrewThreadHoles
@@ -79,11 +80,20 @@ del conn_core, tmp_edges
 with BuildPart() as lid:
     # Core "box"
     with Locations(Location((0, 0, wall))):
-        Box(box_max_width + 4 * wall + 2 * tol, 5 * wall + 2 * tol, box_max_height + 2 * wall + tol)
-        with Locations(Location((0, wall, -wall / 2))):
-            Box(box_max_width + 2 * wall + 2 * tol, 4.5 * wall + 2 * tol, box_max_height + wall + tol,
-                mode=Mode.SUBTRACT)
-    loc = Location(faces().group_by(Axis.Y)[0].face().center()) * Location((0, wall + wall / 2, -wall))
+        Box(box_max_width + 4 * wall + 2 * tol, 5 * wall + 2 * tol, box_max_height + 3 * wall + tol)
+
+    # Remove some material from the bottom
+    tmp_edges = edges().group_by(Axis.Z)[0].filter_by(Axis.Y)
+    chamfer(tmp_edges, box_max_height / 2 - box_min_height + wall)
+
+    # Core "box" insides
+    with Locations(Location((0, wall, 0))):
+        Box(box_max_width + 2 * wall + 2 * tol, 4.5 * wall + 2 * tol, box_max_height + 3 * wall + tol,
+            mode=Mode.SUBTRACT)
+        with Locations(Location((0, tol, wall + tol / 2))):
+            Box(box_max_width + 4 * wall + 2 * tol, 3 * wall, box_max_height * 0.72)
+            Box(box_max_width + 2 * wall + 2 * tol, 3 * wall, box_max_height * 0.72, mode=Mode.SUBTRACT)
+    loc = Location(faces().group_by(Axis.Y)[0].face().center()) * Location((0, wall + wall / 2, - 3 / 2 * wall))
     RigidJoint(label="lid_box", joint_location=loc)
     del loc
 
@@ -97,24 +107,23 @@ with BuildPart() as lid:
     with BuildSketch(*sketch_locs):
         Rectangle(tmp_edges[0].length, wall - 2 * tol)
     extrude(amount=wall)
-    tmp_faces = faces(Select.LAST).group_by(SortBy.AREA)[0]
+    tmp_faces = faces(Select.LAST).group_by(SortBy.AREA)[1]
 
     # Smooth rails to engage better
     tmp_edges = edges(Select.LAST).filter_by(Axis.Z)
     chamfer([tmp_edges.group_by(Axis.X)[i] for i in [0, -1]], wall - eps)
 
     # Clicking mechanism
-    click_size = 1 * wall
-    with Locations(
-            *[Location((0, 0, -6.6)) * f.center_location * Rotation(0, 45, 0) for f in
-              tmp_faces]):
-        Box(wall + click_size, wall - 2 * tol, wall + click_size)
+    click_size = 2 * wall
+    with Locations(*[
+        f.center_location * Pos((-9.2 if f.center().X < 0 else 9.2, 0, 0)) * Rotation(0, 45, 0) for f in tmp_faces]):
+        Box(click_size, wall - 2 * tol, click_size)
     del sketch_locs
     del tmp_faces
 
     # Smooth rails to engage better
     tmp_edges = edges(Select.LAST).filter_by(Axis.Y)
-    fillet([tmp_edges.group_by(Axis.X)[i] for i in [1, -2]], 2 * click_size - eps)
+    fillet([tmp_edges.group_by(Axis.X)[i] for i in [1, -2]], 0.75 * click_size)
     del tmp_edges
 
     # Add hole for the allen key part that overlaps with the lid
@@ -144,3 +153,7 @@ if __name__ == "__main__":
     if os.getenv('CI', '') != '':
         export_all(os.path.join(os.path.dirname(__file__), '..', 'export'),
                    export_filter=lambda name, obj: name.startswith('module_allen_box'))
+    else:  # Export STLs
+        export_stl(module_allen_box, os.path.join(os.path.dirname(__file__), '..', 'export', 'module_allen_box.stl'))
+        export_stl(module_allen_box_lid,
+                   os.path.join(os.path.dirname(__file__), '..', 'export', 'module_allen_box_lid.stl'))
