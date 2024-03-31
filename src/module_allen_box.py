@@ -97,6 +97,7 @@ with BuildPart() as lid:
     with BuildSketch(*sketch_locs):
         Rectangle(tmp_edges[0].length, wall - 2 * tol)
     extrude(amount=wall)
+    tmp_faces = faces(Select.LAST).group_by(SortBy.AREA)[0]
 
     # Smooth rails to engage better
     tmp_edges = edges(Select.LAST).filter_by(Axis.Z)
@@ -104,22 +105,25 @@ with BuildPart() as lid:
 
     # Clicking mechanism
     click_size = 1 * wall
-    with BuildSketch(*[Location((0, 0, - 2.5 * box_min_height - click_size)) * sk_loc for sk_loc in sketch_locs]):
-        Rectangle(eps, wall - 2 * tol + eps)
-    extrude(amount=wall + click_size)
+    with Locations(
+            *[Location((0, 0, -6.6)) * f.center_location * Rotation(0, 45, 0) for f in
+              tmp_faces]):
+        Box(wall + click_size, wall - 2 * tol, wall + click_size)
     del sketch_locs
+    del tmp_faces
 
     # Smooth rails to engage better
     tmp_edges = edges(Select.LAST).filter_by(Axis.Y)
-    chamfer([tmp_edges.group_by(Axis.X)[i] for i in [0, -1]], click_size - eps)
+    fillet([tmp_edges.group_by(Axis.X)[i] for i in [1, -2]], 2 * click_size - eps)
     del tmp_edges
 
-    # TODO: Add hole for the allen key part that overlaps with the lid
-    # TODO: Work on keeping camera position on scene reloads!
+    # Add hole for the allen key part that overlaps with the lid
+    with BuildSketch(Plane.ZX.location * Location((-0.3 * box_max_height / 2, -0.51 * box_max_width / 2, 0))):
+        SlotOverall(25, 5 + 2 * tol, align=(Align.MAX, Align.CENTER))
+    extrude(amount=10, both=True, mode=Mode.SUBTRACT)
 
 # Connect the lid to the box
 box.joints["front_lid"].connect_to(lid.joints["lid_box"])
-# lid.part.move(Location((0, -box_max_length / 2 - 2 * wall, 0)))
 module_allen_box_lid = lid.part
 del lid, box
 
