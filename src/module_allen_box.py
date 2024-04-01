@@ -11,14 +11,13 @@ from src.global_params import wall, eps, tol
 
 # %% ================== MODELLING ==================
 
-# https://www.amazon.es/dp/B07ZMXQ68T
-box_min_width = 35 * MM
-box_max_width = 43 * MM
-box_min_length = 42 * MM
-box_max_length = 72.5 * MM
-box_min_height = 2 * MM
-box_max_height = 25 * MM
-screw_max_diameter = 9 * MM
+# https://www.amazon.com/dp/B07ZMXQ68T
+box_min_width = 35 * MM + 2 * tol
+box_max_width = 43 * MM + 2 * tol
+box_min_length = 42 * MM + 2 * tol
+box_max_length = 72.5 * MM + 2 * tol
+box_min_height = 2 * MM + 2 * tol
+box_max_height = 25 * MM + 2 * tol
 box_conn_offset = 10 * MM
 
 with BuildPart() as conn_core:
@@ -80,7 +79,7 @@ del conn_core, tmp_edges
 with BuildPart() as lid:
     # Core "box"
     with Locations(Location((0, 0, wall))):
-        Box(box_max_width + 4 * wall + 2 * tol, 5 * wall + 2 * tol, box_max_height + 3 * wall + tol)
+        Box(box_max_width + 4 * wall + 2 * tol, 5 * wall + tol, box_max_height + 3 * wall + tol)
 
     # Remove some material from the bottom
     tmp_edges = edges().group_by(Axis.Z)[0].filter_by(Axis.Y)
@@ -88,12 +87,13 @@ with BuildPart() as lid:
 
     # Core "box" insides
     with Locations(Location((0, wall, 0))):
-        Box(box_max_width + 2 * wall + 2 * tol, 4.5 * wall + 2 * tol, box_max_height + 3 * wall + tol,
+        Box(box_max_width + 2 * wall + 2 * tol, 5 * wall + tol, box_max_height + 3 * wall + tol,
             mode=Mode.SUBTRACT)
-        with Locations(Location((0, tol, wall + tol / 2))):
-            Box(box_max_width + 4 * wall + 2 * tol, 3 * wall, box_max_height * 0.72)
-            Box(box_max_width + 2 * wall + 2 * tol, 3 * wall, box_max_height * 0.72, mode=Mode.SUBTRACT)
-    loc = Location(faces().group_by(Axis.Y)[0].face().center()) * Location((0, wall + wall / 2, - 3 / 2 * wall))
+        with Locations(Location((0, tol/2, wall + tol / 2))):
+            Box(box_max_width + 4 * wall + 2 * tol, 3 * wall + 2 * wall, box_max_height * 0.5, mode=Mode.SUBTRACT)
+            Box(box_max_width + 4 * wall + 2 * tol, 3 * wall, box_max_height * 0.63)
+            Box(box_max_width + 2 * wall + 2 * tol, 3 * wall, box_max_height * 0.63, mode=Mode.SUBTRACT)
+    loc = Location(faces().group_by(Axis.Y)[0].face().center()) * Location((0, wall + tol, - 3 / 2 * wall))
     RigidJoint(label="lid_box", joint_location=loc)
     del loc
 
@@ -102,10 +102,10 @@ with BuildPart() as lid:
     tmp_edges = [tmp_edges.group_by(Axis.X)[i].edge() for i in [1, -2]]
     tmp_faces = faces().filter_by(Axis.X)
     tmp_faces = [tmp_faces.group_by(Axis.X)[i].face().center_location.orientation for i in [1, -2]]
-    off = wall / 2 + wall - tol
+    off = wall + (wall - tol) / 2 + tol / 2
     sketch_locs = [Location((0, -off, 0)) * Location(edge.center(), tmp_faces[i]) for i, edge in enumerate(tmp_edges)]
     with BuildSketch(*sketch_locs):
-        Rectangle(tmp_edges[0].length, wall - 2 * tol)
+        Rectangle(tmp_edges[0].length, wall - tol)
     extrude(amount=wall)
     tmp_faces = faces(Select.LAST).group_by(SortBy.AREA)[1]
 
@@ -114,20 +114,20 @@ with BuildPart() as lid:
     chamfer([tmp_edges.group_by(Axis.X)[i] for i in [0, -1]], wall - eps)
 
     # Clicking mechanism
-    click_size = 2 * wall
+    click_size = 1.5 * wall
     with Locations(*[
-        f.center_location * Pos((-9.2 if f.center().X < 0 else 9.2, 0, 0)) * Rotation(0, 45, 0) for f in tmp_faces]):
+        f.center_location * Pos((-9.29 if f.center().X < 0 else 9.29, 0, 0)) * Rotation(0, 45, 0) for f in tmp_faces]):
         Box(click_size, wall - 2 * tol, click_size)
     del sketch_locs
     del tmp_faces
 
-    # Smooth rails to engage better
+    # Smooth clicking mechanism
     tmp_edges = edges(Select.LAST).filter_by(Axis.Y)
     fillet([tmp_edges.group_by(Axis.X)[i] for i in [1, -2]], 0.75 * click_size)
     del tmp_edges
 
     # Add hole for the allen key part that overlaps with the lid
-    with BuildSketch(Plane.ZX.location * Location((-0.3 * box_max_height / 2, -0.51 * box_max_width / 2, 0))):
+    with BuildSketch(Plane.ZX.location * Location((-0.29 * box_max_height / 2, -0.509 * box_max_width / 2, 0))):
         SlotOverall(25, 5 + 2 * tol, align=(Align.MAX, Align.CENTER))
     extrude(amount=10, both=True, mode=Mode.SUBTRACT)
 
