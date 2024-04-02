@@ -11,13 +11,10 @@ from src.global_params import wall, eps, tol
 
 # %% ================== MODELLING ==================
 
-# https://www.amazon.com/dp/B07ZMXQ68T
-box_min_width = 35 * MM + 2 * tol
-box_max_width = 43 * MM + 2 * tol
-box_min_length = 42 * MM + 2 * tol
-box_max_length = 72.5 * MM + 2 * tol
-box_min_height = 2 * MM + 2 * tol
-box_max_height = 25 * MM + 2 * tol
+box_width = 43 * MM + 2 * tol
+box_length = 75 * MM + 2 * tol
+box_height = 25 * MM + 2 * tol
+box_outer_height = 2 * MM + 2 * tol
 box_conn_offset = 10 * MM
 
 with BuildPart() as conn_core:
@@ -33,9 +30,9 @@ with BuildPart() as conn_core:
 
 with BuildPart() as box:
     # Make the main box with open front
-    Box(box_max_width + 2 * wall, box_max_length + 2 * wall, box_max_height + 2 * wall)
+    Box(box_width + 2 * wall, box_length + 2 * wall, box_height + 2 * wall)
     with Locations(Location((0, -wall, 0))):
-        Box(box_max_width, box_max_length + wall, box_max_height, mode=Mode.SUBTRACT)
+        Box(box_width, box_length + wall, box_height, mode=Mode.SUBTRACT)
 
     loc = Location(faces().group_by(Axis.Z)[-1].edges().group_by(Axis.Y)[-1].edge().center())
     RigidJoint(label="top_conn_core", joint_location=loc)
@@ -45,16 +42,16 @@ with BuildPart() as box:
 
     # Make the insides tight
     tmp_edges = edges(Select.LAST).filter_by(Axis.Y)
-    chamfer(tmp_edges, box_max_height / 2 - box_min_height)
+    chamfer(tmp_edges, box_height / 2 - box_outer_height)
 
     # Remove some material from the bottom
     tmp_edges = edges().group_by(Axis.Z)[0].filter_by(Axis.Y)
-    chamfer(tmp_edges, box_max_height / 2 - box_min_height)
+    chamfer(tmp_edges, box_height / 2 - box_outer_height)
 
     # Add rails for the lid
-    with Locations(Location((-box_max_width / 2 - wall / 2, -box_max_length / 2 + wall / 2 + wall, 0)),
-                   Location((box_max_width / 2 + wall / 2, -box_max_length / 2 + wall / 2 + wall, 0))):
-        Box(wall, wall, box_max_height + 2 * wall, mode=Mode.SUBTRACT)
+    with Locations(Location((-box_width / 2 - wall / 2, -box_length / 2 + wall / 2 + wall, 0)),
+                   Location((box_width / 2 + wall / 2, -box_length / 2 + wall / 2 + wall, 0))):
+        Box(wall, wall, box_height + 2 * wall, mode=Mode.SUBTRACT)
 
     # Smooth rails for easier printing
     tmp_edges = edges(Select.LAST).filter_by(Axis.Z)
@@ -65,34 +62,41 @@ with BuildPart() as box:
 box.joints["top_conn_core"].connect_to(conn_core.joints["conn_core"])
 # Avoid screw collisions by extending screw holes vertically
 for wire in conn_core.faces().group_by(Axis.Z)[0].face().inner_wires():
-    box.part -= extrude(Face(wire), box_max_height * 2, both=True)
+    box.part -= extrude(Face(wire), box_height * 2, both=True)
 del wire
 
 module_allen_box = conn_core.part + box.part
 
 # Ease 3D printing by adding a chamfer to the base of the connector
+# The same holes are used to force remove the allen key using a key as a lever
 tmp_edges = module_allen_box.edges().filter_by(Axis.X).group_by(Axis.Y)[-3].group_by(Axis.Z)[0]
 module_allen_box = chamfer(tmp_edges, box_conn_offset - eps, conn_core.part.bounding_box().size.Z - wall - eps)
-del conn_core, tmp_edges
+del conn_core
+
+# Fillet outer edges for easier handling
+tmp_edges = module_allen_box.edges().filter_by(Axis.Y).group_by(SortBy.LENGTH)[-1]
+tmp_edges += module_allen_box.edges().filter_by(Axis.Y).group_by(Axis.Z)[0]
+tmp_edges += module_allen_box.edges().group_by(Axis.Y)[-1].group_by(Axis.Z)[:-1]
+module_allen_box = fillet(tmp_edges, wall - eps)
 
 # Add a lid to the front of the open box
 with BuildPart() as lid:
     # Core "box"
     with Locations(Location((0, 0, wall))):
-        Box(box_max_width + 4 * wall + 2 * tol, 5 * wall + tol, box_max_height + 3 * wall + tol)
+        Box(box_width + 4 * wall + 2 * tol, 5 * wall + tol, box_height + 3 * wall + tol)
 
     # Remove some material from the bottom
     tmp_edges = edges().group_by(Axis.Z)[0].filter_by(Axis.Y)
-    chamfer(tmp_edges, box_max_height / 2 - box_min_height + wall)
+    chamfer(tmp_edges, box_height / 2 - box_outer_height + wall)
 
     # Core "box" insides
     with Locations(Location((0, wall, 0))):
-        Box(box_max_width + 2 * wall + 2 * tol, 5 * wall + tol, box_max_height + 3 * wall + tol,
+        Box(box_width + 2 * wall + 2 * tol, 5 * wall + tol, box_height + 3 * wall + tol,
             mode=Mode.SUBTRACT)
         with Locations(Location((0, tol/2, wall + tol / 2))):
-            Box(box_max_width + 4 * wall + 2 * tol, 3 * wall + 2 * wall, box_max_height * 0.5, mode=Mode.SUBTRACT)
-            Box(box_max_width + 4 * wall + 2 * tol, 3 * wall, box_max_height * 0.63)
-            Box(box_max_width + 2 * wall + 2 * tol, 3 * wall, box_max_height * 0.63, mode=Mode.SUBTRACT)
+            Box(box_width + 4 * wall + 2 * tol, 3 * wall + 2 * wall, box_height * 0.5, mode=Mode.SUBTRACT)
+            Box(box_width + 4 * wall + 2 * tol, 3 * wall, box_height * 0.63)
+            Box(box_width + 2 * wall + 2 * tol, 3 * wall, box_height * 0.63, mode=Mode.SUBTRACT)
     loc = Location(faces().group_by(Axis.Y)[0].face().center()) * Location((0, wall + tol, - 3 / 2 * wall))
     RigidJoint(label="lid_box", joint_location=loc)
     del loc
@@ -124,12 +128,19 @@ with BuildPart() as lid:
     # Smooth clicking mechanism
     tmp_edges = edges(Select.LAST).filter_by(Axis.Y)
     fillet([tmp_edges.group_by(Axis.X)[i] for i in [1, -2]], 0.75 * click_size)
-    del tmp_edges
 
     # Add hole for the allen key part that overlaps with the lid
-    with BuildSketch(Plane.ZX.location * Location((-0.29 * box_max_height / 2, -0.509 * box_max_width / 2, 0))):
-        SlotOverall(25, 5 + 2 * tol, align=(Align.MAX, Align.CENTER))
+    with BuildSketch(Plane.ZX.location * Location((0, -0.6 * box_width / 2, 0))):
+        SlotOverall(25, 10 + 2 * tol, align=(Align.MAX, Align.CENTER))
     extrude(amount=10, both=True, mode=Mode.SUBTRACT)
+    tmp_edges = sum(edges(Select.LAST).filter_by(Axis.Y).group_by(Axis.Z)[0:2], ShapeList())
+    fillet(tmp_edges, 1.5 * wall)
+
+    # Fillet outer edges for easier handling
+    tmp_edges = sum(edges().group_by(Axis.Z)[-1].group_by(Axis.Y)[0:2], ShapeList())
+    tmp_edges += edges().filter_by(Axis.Z).group_by(Axis.Y)[0].group_by(Axis.Z)[-1]
+    fillet(tmp_edges, wall - eps)
+    del tmp_edges
 
 # Connect the lid to the box
 box.joints["front_lid"].connect_to(lid.joints["lid_box"])
@@ -141,7 +152,7 @@ base_path = os.path.join(os.path.dirname(__file__), '..') if "__file__" in local
 with open(os.path.join(base_path, 'assets', 'allen-lowpoly.glb'), 'rb') as f:
     allen_glb = f.read()
 
-show_all()
+show_all(auto_clear=False)
 show(allen_glb, names="allen_3d_scan", auto_clear=False)
 
 # %% ================== EXPORT ==================
