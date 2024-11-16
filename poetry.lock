@@ -903,21 +903,21 @@ files = [
 
 [[package]]
 name = "yacv-server"
-version = "0.9.0"
+version = "0.9.2"
 description = "Yet Another CAD Viewer (server)"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "yacv_server-0.9.0-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:62b096a02a37d4c9e37cb6931b6533979ccc58462851c00afb5333b9902c7704"},
-    {file = "yacv_server-0.9.0.tar.gz", hash = "sha256:5f151c950c2a2f4017d31c6fe5b697beb1b18910cfae2ad087d91272e6fab0b0"},
+    {file = "yacv_server-0.9.2-cp311-cp311-manylinux_2_35_x86_64.whl", hash = "sha256:ad57e8e0a9b5664265ba91ec198fb646df115ee7bafc5ef80913b6549098fd6a"},
+    {file = "yacv_server-0.9.2.tar.gz", hash = "sha256:6aaacaf2820c9211a6d74991e79a3eb6a51d43faac5c578754c267ac2ce3ac2c"},
 ]
 
 [package.dependencies]
 build123d = ">=0.5,<0.8"
-pillow = ">=10.2.0,<11.0.0"
+pillow = ">=10.2,<12.0"
 pygltflib = ">=1.16.2,<2.0.0"
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fae472427f4633e7cd67fd48ec9670cfb1a1a0e4d5d21e77f1582686b4aaa12e"
+content-hash = "90157730e4e41d662e37af6d186b0a165f86d2d95e487f56957240c5cb96da3a"
