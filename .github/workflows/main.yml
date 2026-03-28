@@ -47,7 +47,7 @@ jobs:
       - run: "cp assets/*.glb export/"
 
       # Deploy
-      - uses: "actions/configure-pages@v5"
+      - uses: "actions/configure-pages@v6"
       - uses: "actions/upload-pages-artifact@v4"
         with:
           path: 'export'
