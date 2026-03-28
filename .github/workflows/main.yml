@@ -52,7 +52,7 @@ jobs:
         with:
           path: 'export'
       - id: "deployment"
-        uses: "actions/deploy-pages@v4"
+        uses: "actions/deploy-pages@v5"
 
       # If release...
       #- run: 'zip -r exports.zip export'
